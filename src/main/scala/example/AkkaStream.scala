@@ -51,6 +51,7 @@ object AkkaStream extends App {
     val out = Sink.foreach[Int](println)
 
     val bcast = builder.add(Broadcast[Int](4))
+    val merge = builder.add(Merge[Int](4))
 
     val f1 = Flow[Int].map(_ + 10)
     val f2 = Flow[Int].map(_ - 10)
@@ -58,29 +59,33 @@ object AkkaStream extends App {
     val f4 = Flow[Int].map(_ / 10)
 
     in ~> bcast
-    bcast ~> f1 ~> out
-    bcast ~> f2 ~> out
-    bcast ~> f3 ~> out
-    bcast ~> f4 ~> out
+    bcast ~> f1 ~> merge ~> out
+    bcast ~> f2 ~> merge
+    bcast ~> f3 ~> merge
+    bcast ~> f4 ~> merge
     ClosedShape
   })
   g1.run
 
-  // Balance and Broadcast
+  // Balance, Broadcast and Merge
+
   val g2 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
     import GraphDSL.Implicits._
 
     val in = Source(1 to 10)
     val out = Sink.foreach[Any](println)
 
-    val bcast = builder.add(Broadcast[Int](2))
-    val merge = builder.add(Merge[Int](2))
-    val balance = builder.add(Balance[Int](2))
+    val bcast1 = builder.add(Broadcast[Int](2))
+    val bcast2 = builder.add(Broadcast[Int](2))
+    val merge = builder.add(Merge[Int](4))
+    val balancer = builder.add(Balance[Int](2))
 
     val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
 
-    in ~> balance ~> f1 ~> merge ~> out
-          balance ~> f2 ~> merge
+    in ~> balancer ~> bcast1 ~> f1 ~> merge ~> out
+                      bcast1 ~> f2 ~> merge
+          balancer ~> bcast2 ~> f3 ~> merge
+                      bcast2 ~> f4 ~> merge
     ClosedShape
   })
   g2.run
