@@ -11,6 +11,8 @@ final case class Tweet(author: Author, timestamp: Long, body: String)
 
 object AkkaStream extends App {
 
+  implicit val system = ActorSystem("QuickStart")
+  implicit val materializer = ActorMaterializer()
   // Create Source
   val tweets: Source[Tweet, NotUsed] = Source(Tweet(Author("rolandkuhn"),
                                                     System.currentTimeMillis,
@@ -28,8 +30,6 @@ object AkkaStream extends App {
           "we compared #apples to #oranges!") ::
     Nil)
 
-  implicit val system = ActorSystem("QuickStart")
-  implicit val materializer = ActorMaterializer()
 
   // Define Flow
   val count: Flow[Tweet, String, NotUsed] = Flow[Tweet].map(tweet ⇒ {
@@ -44,22 +44,45 @@ object AkkaStream extends App {
 
   combineSource.runWith(consoleSink)
 
-  // Balance and Broadcast
-  val g = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+  // Broadcast
+  val g1 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
     import GraphDSL.Implicits._
     val in = Source(1 to 10)
     val out = Sink.foreach[Int](println)
 
     val bcast = builder.add(Broadcast[Int](4))
 
-    val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
+    val f1 = Flow[Int].map(_ + 10)
+    val f2 = Flow[Int].map(_ - 10)
+    val f3 = Flow[Int].map(_ * 10)
+    val f4 = Flow[Int].map(_ / 10)
 
-    in ~> bcast ~> f1 ~> out
+    in ~> bcast
+    bcast ~> f1 ~> out
     bcast ~> f2 ~> out
     bcast ~> f3 ~> out
     bcast ~> f4 ~> out
     ClosedShape
   })
-  g.run()
+  g1.run
+
+  // Balance and Broadcast
+  val g2 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+    import GraphDSL.Implicits._
+
+    val in = Source(1 to 10)
+    val out = Sink.foreach[Any](println)
+
+    val bcast = builder.add(Broadcast[Int](2))
+    val merge = builder.add(Merge[Int](2))
+    val balance = builder.add(Balance[Int](2))
+
+    val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
+
+    in ~> balance ~> f1 ~> merge ~> out
+          balance ~> f2 ~> merge
+    ClosedShape
+  })
+  g2.run
 
 }
