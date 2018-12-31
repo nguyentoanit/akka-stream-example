@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import scala.concurrent.Future
-
+import akka.stream._
 final case class Author(handle: String)
 final case class Tweet(author: Author, timestamp: Long, body: String)
 
@@ -43,4 +43,23 @@ object AkkaStream extends App {
   val consoleSink: Sink[String, Future[Done]] = Sink.foreach[String](println)
 
   combineSource.runWith(consoleSink)
+
+  // Balance and Broadcast
+  val g = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+    import GraphDSL.Implicits._
+    val in = Source(1 to 10)
+    val out = Sink.foreach[Int](println)
+
+    val bcast = builder.add(Broadcast[Int](4))
+
+    val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
+
+    in ~> bcast ~> f1 ~> out
+    bcast ~> f2 ~> out
+    bcast ~> f3 ~> out
+    bcast ~> f4 ~> out
+    ClosedShape
+  })
+  g.run()
+
 }
