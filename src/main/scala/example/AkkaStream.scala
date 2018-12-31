@@ -71,6 +71,7 @@ object AkkaStream extends App {
 
   val g2 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
     import GraphDSL.Implicits._
+    import scala.concurrent.duration.DurationInt
 
     val in = Source(1 to 10)
     val out = Sink.foreach[Any](println)
@@ -81,6 +82,9 @@ object AkkaStream extends App {
     val balancer = builder.add(Balance[Int](2))
 
     val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
+
+    // Limit rate
+    val f1, f2, f3, f4 = Flow[Int].map(_ + 10).throttle(1, 3.second)
 
     in ~> balancer ~> bcast1 ~> f1 ~> merge ~> out
                       bcast1 ~> f2 ~> merge
