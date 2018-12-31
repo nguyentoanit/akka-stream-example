@@ -84,7 +84,7 @@ object AkkaStream extends App {
     val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
 
     // Limit rate
-    val f1, f2, f3, f4 = Flow[Int].map(_ + 10).throttle(1, 3.second)
+//    val f1, f2, f3, f4 = Flow[Int].map(_ + 10).throttle(1, 3.second)
 
     in ~> balancer ~> bcast1 ~> f1 ~> merge ~> out
                       bcast1 ~> f2 ~> merge
