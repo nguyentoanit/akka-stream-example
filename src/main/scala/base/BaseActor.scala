@@ -2,14 +2,19 @@ package base
 
 import akka.actor.Actor
 
-case class Info(name: String)
+case class Send(message: String)
+
+case class Question(message: String)
 
 class BaseActor extends Actor {
   override def receive: Receive = {
-    case Info(name) => println(name)
-  }
+    case Send(message) => println(message)
+    case Question(message) => {
+      println(message)
+      println("Thinking...")
 
-  override def preStart(): Unit = {
-    super.preStart()
+      Thread.sleep(4000)
+      sender() ! "11"
+    }
   }
 }
