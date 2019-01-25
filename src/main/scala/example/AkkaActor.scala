@@ -11,12 +11,11 @@ import scala.concurrent.duration._
 object AkkaActor {
   def main(args: Array[String]): Unit = {
     implicit val timeout = Timeout(5 seconds) // needed for `?` below
-
     val system = ActorSystem("TestActorSystem")
     val baseActor = system.actorOf(Props[BaseActor])
     baseActor ! Send("Hello!!!")
     val reponse = baseActor ask Question("How old are you?")
     val answer = Await.result(reponse, timeout.duration)
-    println(answer)
+    println(reponse)
   }
 }

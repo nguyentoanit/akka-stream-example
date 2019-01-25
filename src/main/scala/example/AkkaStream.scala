@@ -1,11 +1,14 @@
 package example
 
-import akka.{NotUsed, Done}
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, _}
+import akka.stream.scaladsl.GraphDSL.Implicits._
 import akka.stream.scaladsl._
+import akka.{Done, NotUsed}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import akka.stream._
+import scala.util.{Failure, Success}
 final case class Author(handle: String)
 final case class Tweet(author: Author, timestamp: Long, body: String)
 
@@ -43,12 +46,11 @@ object AkkaStream extends App {
   val consoleSink: Sink[String, Future[Done]] = Sink.foreach[String](println)
 
   combineSource.runWith(consoleSink)
-
+  val in = Source(1 to 10)
+  val out = Sink.seq[Int]
   // Broadcast
-  val g1 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
-    import GraphDSL.Implicits._
-    val in = Source(1 to 10)
-    val out = Sink.foreach[Int](println)
+  val g1 = RunnableGraph.fromGraph(GraphDSL.create(out) { implicit builder =>
+    out =>
 
     val bcast = builder.add(Broadcast[Int](4))
     val merge = builder.add(Merge[Int](4))
@@ -64,15 +66,15 @@ object AkkaStream extends App {
     bcast ~> f3 ~> merge
     bcast ~> f4 ~> merge
     ClosedShape
-  })
-  g1.run
+  }).run()
+
+  g1.onComplete {
+    case Success(value) => println(value)
+    case Failure(e) => println(e.getMessage)
+  }
 
   // Balance, Broadcast and Merge
-
-  val g2 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
-    import GraphDSL.Implicits._
-    import scala.concurrent.duration.DurationInt
-
+  val g2 = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder =>
     val in = Source(1 to 10)
     val out = Sink.foreach[Any](println)
 
@@ -84,6 +86,7 @@ object AkkaStream extends App {
     val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
 
     // Limit rate
+    //    import scala.concurrent.duration.DurationInt
 //    val f1, f2, f3, f4 = Flow[Int].map(_ + 10).throttle(1, 3.second)
 
     in ~> balancer ~> bcast1 ~> f1 ~> merge ~> out
@@ -93,5 +96,4 @@ object AkkaStream extends App {
     ClosedShape
   })
   g2.run
-
 }
