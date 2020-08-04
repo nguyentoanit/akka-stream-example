@@ -1,10 +1,10 @@
-package example
+package example.akkaStream
 
 import akka.actor.ActorSystem
 import akka.stream.ActorAttributes.supervisionStrategy
 import akka.stream.ActorMaterializer
 import akka.stream.Supervision.resumingDecider
-import akka.stream.scaladsl._
+import akka.stream.scaladsl.Source
 
 object AkkaStreamErrorHandling extends App {
 

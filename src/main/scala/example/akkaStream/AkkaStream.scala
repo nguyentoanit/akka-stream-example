@@ -1,9 +1,9 @@
-package example
+package example.akkaStream
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, _}
 import akka.stream.scaladsl.GraphDSL.Implicits._
 import akka.stream.scaladsl._
+import akka.stream.{ActorMaterializer, _}
 import akka.{Done, NotUsed}
 
 import scala.concurrent.ExecutionContext.Implicits.global

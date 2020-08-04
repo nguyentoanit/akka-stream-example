@@ -1,4 +1,4 @@
-package base
+package example.akkaActor
 
 import akka.actor.Actor
 

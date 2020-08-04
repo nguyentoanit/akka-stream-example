@@ -1,12 +1,9 @@
-package example
+package example.akkaActor
 
 import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
 import akka.util.Timeout
-import base.{BaseActor, Question, Send}
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 
 object AkkaActor {
   def main(args: Array[String]): Unit = {

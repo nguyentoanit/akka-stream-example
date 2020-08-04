@@ -1,15 +1,8 @@
-package example
+package example.akkaStream
 
 import akka.actor.ActorSystem
-import akka.stream._
-import akka.stream.scaladsl.GraphDSL.Implicits._
-import akka.stream.scaladsl._
-import akka.{Done, NotUsed}
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.{ActorMaterializer, DelayOverflowStrategy, KillSwitches}
 
 object SharedKillSwitch {
   implicit val system = ActorSystem("QuickStart")
@@ -20,10 +13,10 @@ object SharedKillSwitch {
     val lastSnk = Sink.foreach[Int](println)
     val sharedKillSwitch = KillSwitches.shared("my-kill-switch")
     if (args.length > 0) sharedKillSwitch.shutdown()
-      val delayedLast = countingSrc
-        .delay(1.second, DelayOverflowStrategy.backpressure)
-        .via(sharedKillSwitch.flow)
-        .runWith(lastSnk)
+    val delayedLast = countingSrc
+      .delay(1.second, DelayOverflowStrategy.backpressure)
+      .via(sharedKillSwitch.flow)
+      .runWith(lastSnk)
 
 
   }
