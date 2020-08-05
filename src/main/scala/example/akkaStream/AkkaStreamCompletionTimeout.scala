@@ -3,6 +3,7 @@ package example.akkaStream
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.stream.{ActorMaterializer, DelayOverflowStrategy}
+import scala.concurrent.duration._
 
 object AkkaStreamCompletionTimeout extends App {
   implicit val system: ActorSystem = ActorSystem("Demo-Basics")

@@ -3,6 +3,7 @@ package example.akkaStream
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, DelayOverflowStrategy, KillSwitches}
+import scala.concurrent.duration._
 
 object SharedKillSwitch {
   implicit val system = ActorSystem("QuickStart")
